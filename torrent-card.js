@@ -84,6 +84,8 @@ class TorrentCard extends HTMLElement {
     const config = this._config;
     const root = this.shadowRoot;
     const card = root.lastChild;
+    var elm = root.getElementById('container');
+    var ids = [];
 
     if (hass.states[config.entity]) {
       const feed = config.feed_attribute ? hass.states[config.entity].attributes[config.feed_attribute] : hass.states[config.entity].attributes;
@@ -180,7 +182,10 @@ class TorrentCard extends HTMLElement {
                 }
               }
               //add button
-              card_content += this.addButton(feed[entry]);
+              if (feed[entry].hasOwnProperty('guid')) {
+                card_content += this.addButton(feed[entry]);
+                ids.push(feed[entry].guid);
+              }
             }
 
             card_content += `</tr>`;
@@ -190,7 +195,17 @@ class TorrentCard extends HTMLElement {
 
         root.lastChild.hass = hass;
         card_content += `</tbody></table>`;
-        root.getElementById('container').innerHTML = card_content;
+        elm.innerHTML = card_content;
+
+        ids.forEach((id) => {
+          let btn = elm.querySelector('#' + id);
+          btn.hass = hass;
+          btn.addEventListener('click', event => {
+            this.stopDownload(event);
+          });
+        });
+
+
       } else {
         this.style.display = 'none';
       }
@@ -201,20 +216,18 @@ class TorrentCard extends HTMLElement {
 
   addButton(entry) {
     let content = ""
-    if (entry.hasOwnProperty('guid')) {
-      content += `<td class="button">`;
-      content += `<button id="${entry.guid}" click="${() => this.stopDownload(entry.guid)}">End</button>`;
-      content += `</td>`;
-    }
+    content += `<td class="button">`;
+    content += `<button class="torrent-stop-btn" id="${entry.guid}">End</button>`;
+    content += `</td>`;
 
     return content;
   }
 
-  stopDownload(guid) {
-    hass.callService('mqtt', 'publish', {
+  stopDownload(evt) {
+    evt.srcElement.hass.callService('mqtt', 'publish', {
       topic: 'autotorrent/subscriber',
       qos: 0,
-      payload: JSON.stringify({ "type": 2, "name": guid })
+      payload: JSON.stringify({ "type": 2, "name": evt.srcElement.id })
     });
   }
 
