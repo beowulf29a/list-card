@@ -183,8 +183,9 @@ class TorrentCard extends HTMLElement {
               }
               //add button
               if (feed[entry].hasOwnProperty('guid')) {
-                card_content += this.addButton(feed[entry]);
-                ids.push(feed[entry].guid);
+                let g = "a"+feed[entry].guid;
+                card_content += this.addButton(g);
+                ids.push(g);
               }
             }
 
@@ -217,7 +218,7 @@ class TorrentCard extends HTMLElement {
   addButton(entry) {
     let content = ""
     content += `<td class="button">`;
-    content += `<button class="torrent-stop-btn" id="${entry.guid}">End</button>`;
+    content += `<button class="torrent-stop-btn" id="${entry}">End</button>`;
     content += `</td>`;
 
     return content;
